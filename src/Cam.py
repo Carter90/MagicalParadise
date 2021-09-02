@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 from __future__ import print_function
-from picamera import PiCamera
+#from picamera import PiCamera
 from time import sleep
-from PIL import Image
+#from PIL import Image
+#from Pillow import Image
 import pytesseract
-import cv2
+#import cv2
 import sys
 import requests
 import difflib
@@ -81,20 +82,30 @@ class Detect:
 class Price:
 	def __init__(self):
 		with open("../cfg/tcgplayer.token", "r") as tokenFile:
-			# TODO: test with tokenFile.readline().strip()
 			self.token = tokenFile.readlines()[0].strip()
-		self.headers = {'Accept': 'application/json', 'Authorization': 'bearer' + self.token}
+		self.headers = {'Accept': 'application/json','Authorization':'bearer '+self.token}
+		print("Headers: ", self.headers)
 
 	def get(self, product_id):
+		if not product_id or not product_id.isdigit():
+			return None
+		#return 0.0
 		price_url = "http://api.tcgplayer.com/pricing/product/{0}".format(product_id)
 		response = requests.get(price_url, headers=self.headers)
+		if response.raw.status == 400:
+			return None
+		print("product_id:",product_id)
+		print("trying:", "http://api.tcgplayer.com/pricing/product/{0}".format(product_id))
+		if response.json()['errors']==['No products were found.']:
+			print('No products were found.')
+			return None
+		print("response.json():",response.json())
 		return response.json()['results'][0]['marketPrice']
-
 
 class Spell:
 	def __init__(self, cards_filename='cardnames.txt'):
 		# NOTE: cpython garbage collector handles cardsFileName file instance
-		self.card_names = set(cardname.strip() for cardname in open(cards_filename))
+		self.card_names = set(card_name.strip() for card_name in open(cards_filename))
 
 	def check(self, check_me=''):
 		return difflib.get_close_matches(check_me, self.card_names)
@@ -114,9 +125,11 @@ class Spell:
 
 
 class CardNumbers:
-	def __init__(self, cards_pickle='cards.p'):
+	def __init__(self, cards_pickle='../cards2.p'):
 		self.cards = pickle.load(open(cards_pickle, "rb"))
 		self.cardNameNumDict = {card.name: card.number for card in self.cards}
+		#this structure will cause probelms with the set, shiny and what not
+		# need to add thoes as a key too
 		
 	def get_card_number(self, name):
 		return self.cardNameNumDict[name]
