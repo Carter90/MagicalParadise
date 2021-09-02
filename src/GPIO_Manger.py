@@ -3,7 +3,9 @@ from time import sleep
 
 
 class GPIO_Manger: 
-	_bins = [2.5, 7.5, 12.5]  # bin positions for servo  #0, 90, 180 degree
+	_ms = 2.5  # magic number for the servo positions
+	_numofbins = 15
+	_bins = [ (x/(_numofbins-1))* 10 + _ms for x in range(_numofbins)]  # bin positions for servo  #0->180 degrees
 	_statelights = [17, 27, 22]
 	_modelights = [25, 12, 16, 20]
 	_modebuttons = [5, 13, 19, 26, 23]
@@ -43,7 +45,7 @@ class GPIO_Manger:
 	
 	def test_loop(self):
 		while True: 
-			for x in range(3):
+			for x in range(len(self._bins)):
 				self.sweepto(x)
 				sleep(.5)
 			for pin in self._statelights + self._modelights:
